@@ -11,6 +11,7 @@ transtable::transtable() {
 	// TODO Auto-generated constructor stub
 	_table = NULL;
 	_header = NULL;
+	_state_rate = NULL;
 }
 
 size_t transtable::getStateSize() const {
@@ -20,17 +21,26 @@ size_t transtable::getStateSize() const {
 transtable::~transtable() {
 	// TODO Auto-generated destructor stub
 	if (NULL != _header) {
-		for (int it = 0; it < _column_size; ++it)
+		for (size_t it = 0; it < _column_size; ++it)
 			delete _header[it];
 		delete[] _header;
+		_header = NULL;
 	}
-	_header = NULL;
+
 	if (NULL != _table) {
-		for (int it = 0; it < _state_size; ++it)
+		for (size_t it = 0; it < _state_size; ++it)
 			delete[] _table[it];
 		delete[] _table;
+		_table = NULL;
 	}
-	_table = NULL;
+
+	if (NULL != _state_rate) {
+		for (vector_index_rate::iterator it = _state_rate->begin();
+				it != _state_rate->end(); ++it)
+			delete (*it)->second;
+		delete _state_rate;
+		_state_rate = NULL;
+	}
 }
 
 void transtable::handle_table(state_t **state_table, int size) {
@@ -39,7 +49,7 @@ void transtable::handle_table(state_t **state_table, int size) {
 	int row_size = 1;
 
 	vector<state> *compress_index[256];
-	compress_index[0] = new vector<state>(1, 0u);
+	compress_index[0] = new vector<state>(1, 0);
 
 	bool is_exist = false;
 	int find_index = 0;
@@ -85,16 +95,54 @@ void transtable::handle_table(state_t **state_table, int size) {
 	}
 	_table = new state_t*[_state_size];
 
-	for (int it = 0; it < _state_size; ++it) {
+	for (size_t it = 0; it < _state_size; ++it) {
 		_table[it] = new state_t[_column_size];
 	}
 
-	for (int it_j = 0; it_j < _column_size; ++it_j) {
+	for (size_t it_j = 0; it_j < _column_size; ++it_j) {
 		size_t index = *(_header[it_j]->begin());
-		for (int it_i = 0; it_i < _state_size; ++it_i) {
+		for (size_t it_i = 0; it_i < _state_size; ++it_i) {
 			_table[it_i][it_j] = state_table[it_i][index];
 		}
 	}
+
+	//generate _state_rate
+	map<state, int> *state_rate_map = new map<state, int> [_state_size];
+	map<state, int>::iterator map_it;
+	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
+
+		for (size_t it_j = 0; it_j < _column_size; ++it_j) {
+
+			map_it = state_rate_map[it_i].find(_table[it_i][it_j]);
+			if (map_it != state_rate_map[it_i].end()) {
+				++map_it->second;
+			} else {
+				state_rate_map[it_i].insert(
+						pair<state, int>(_table[it_i][it_j], 1));
+			}
+
+		}
+
+	}
+	_state_rate = new vector_index_rate;
+	pair_index_rate *pair_rate = NULL;
+	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
+		pair_rate = new pair_index_rate;
+		pair_rate->first = it_i;
+		pair_rate->second = new vector_pair_rate;
+		_state_rate->push_back(pair_rate);
+
+		for (map_it = state_rate_map[it_i].begin();
+				map_it != state_rate_map[it_i].end(); ++map_it) {
+			pair_rate->second->push_back(
+					make_pair(map_it->first, map_it->second));
+		}
+		sort(pair_rate->second->begin(), pair_rate->second->end(),
+				cmp_pair<pair<state, int> >());
+	}
+	delete[] state_rate_map;
+	sort(_state_rate->begin(), _state_rate->end(), cmp_state_rate());
+
 }
 void transtable::print_table(FILE *fptr) const {
 	if (NULL == fptr)
@@ -102,7 +150,7 @@ void transtable::print_table(FILE *fptr) const {
 	state_t begin_char = 0, end_char = 0;
 	vector<state>::iterator it_i;
 
-	for (int it = 0; it < _column_size; ++it) {
+	for (size_t it = 0; it < _column_size; ++it) {
 
 		fprintf(fptr, "the input character ASCII:");
 		it_i = _header[it]->begin();
@@ -121,13 +169,25 @@ void transtable::print_table(FILE *fptr) const {
 		fprintf(fptr, "	->	[%d]\n", it);
 	}
 	fprintf(fptr, "\n\n\n");
-	for (int it = 0; it < _column_size; ++it) {
+	for (size_t it = 0; it < _column_size; ++it) {
 		fprintf(fptr, "[%d]	", it);
 	}
+
 	fprintf(fptr, "\n");
-	for (int it_i = 0; it_i < _state_size; ++it_i) {
-		for (int it_j = 0; it_j < _column_size; ++it_j) {
+	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
+		for (size_t it_j = 0; it_j < _column_size; ++it_j) {
 			fprintf(fptr, "%d	", _table[it_i][it_j]);
+		}
+		fprintf(fptr, "\n");
+
+	}
+	fprintf(fptr, "\n\n\nrates:\n");
+	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
+		fprintf(fptr, "state:%d	->	", _state_rate->at(it_i)->first);
+		for (vector_pair_rate::iterator it_n =
+				_state_rate->at(it_i)->second->begin();
+				it_n != _state_rate->at(it_i)->second->end(); ++it_n) {
+			fprintf(fptr, "%d(%d)	", it_n->first, it_n->second);
 		}
 		fprintf(fptr, "\n");
 	}

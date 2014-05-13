@@ -11,13 +11,20 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <iostream>
-#include "stdinc.h"
 #include <vector>
+#include <map>
+#include <algorithm>
+#include "stdinc.h"
+#include "compare.h"
+#include "base.h"
 
-using std::vector;
+using std::map;
+using std::make_pair;
 using std::cout;
 using std::endl;
-typedef size_t state;
+
+
+
 
 class transtable {
 private:
@@ -27,7 +34,7 @@ private:
 	state_t **_table;
 	vector<state> **_header;
 
-
+	vector_index_rate *_state_rate;
 
 public:
 	transtable();
