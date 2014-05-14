@@ -34,11 +34,13 @@ public:
 			rate_b = a2->at(it).second;
 			if (rate_a != rate_b) {
 
-				return rate_a >= rate_b;
+				return rate_a > rate_b;
 			}
 		}
-
-		return true;
+		if (size_a == size_b) {
+			return o1->first < o2->first;
+		}
+		return size_a < size_b;
 	}
 };
 #endif /* COMPARE_H_ */
