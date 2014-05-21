@@ -43,4 +43,50 @@ public:
 		return size_a < size_b;
 	}
 };
+
+class remove_copy_if_reorder {
+private:
+	size_t state;
+public:
+	remove_copy_if_reorder(size_t s) :
+			state(s) {
+	}
+	bool operator ()(pair_index_rate* obj) {
+
+		return obj->second->at(0).first == state ? false : true;
+	}
+};
+class remove_if_reorder: remove_copy_if_reorder {
+public:
+	remove_if_reorder(size_t s) :
+			remove_copy_if_reorder(s) {
+	}
+	bool operator ()(pair_index_rate* obj) {
+
+		return !(remove_copy_if_reorder::operator ()(obj));
+	}
+};
+
+class find_if_generate_blocks {
+private:
+	size_t size;
+	state_t **table;
+public:
+	find_if_generate_blocks(state_t **table_t, size_t n) :
+			table(table_t), size(n) {
+	}
+	bool operator ()(pair<size_t, size_t*> obj, size_t index_start,
+			size_t ascii) {
+		size_t obj_size = obj.first;
+		size_t *obj_data = obj.second;
+		if (obj_size == size) {
+			for (size_t it = 0; it < size; ++it) {
+				if (table[index_start + it][ascii] != obj_data[it])
+					return false;
+			}
+			return true;
+		}
+		return false;
+	}
+};
 #endif /* COMPARE_H_ */

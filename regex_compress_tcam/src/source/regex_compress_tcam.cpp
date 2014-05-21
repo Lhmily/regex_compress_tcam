@@ -4,15 +4,20 @@
  *      Author: Lhmily
  */
 
+#include <sys/reent.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <fstream>
 
 #include "../header/dfa.h"
 #include "../header/nfa.h"
 #include "../header/parser.h"
 #include "../header/stdinc.h"
 #include "../header/transtable.h"
+
+using namespace std;
 
 void init_conf(void);
 static int parse_arguments(int argc, char **argv);
@@ -148,13 +153,22 @@ void handle_regex_file(NFA *&nfa, DFA *&dfa) {
 void handle_compress(DFA *dfa) {
 	if ((dfa == NULL) || (!config.tcam))
 		return;
-	FILE *table_file = fopen("transition_table.txt", "w");
-	FILE *blocks_file = fopen("blocks.txt", "w");
+	ofstream *table_fout = new ofstream();
+	(*table_fout).open("transition_table.txt");
+
+	ofstream *blocks_fout = new ofstream();
+	(*blocks_fout).open("blocks.txt");
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
+	table->reorder();
 
 	table->replace_table();
-	table->print_table(table_file);
+	table->print_table(*table_fout);
 	table->generate_blocks(32);
-	table->print_blocks(blocks_file);
+	table->print_blocks(*blocks_fout);
+	//table->compress_blocks();
+	table_fout->close();
+	blocks_fout->close();
+	delete table_fout;
+	delete blocks_fout;
 }
