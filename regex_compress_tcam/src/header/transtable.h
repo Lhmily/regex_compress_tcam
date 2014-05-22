@@ -20,7 +20,7 @@
 #include <fstream>
 #include <cassert>
 #include "stdinc.h"
-#include "compare.h"
+#include "function_object.h"
 #include "base.h"
 
 using namespace std;

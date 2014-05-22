@@ -160,9 +160,9 @@ void handle_compress(DFA *dfa) {
 	(*blocks_fout).open("blocks.txt");
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
-	table->reorder();
+	//table->reorder();
 
-	table->replace_table();
+	//table->replace_table();
 	table->print_table(*table_fout);
 	table->generate_blocks(32);
 	table->print_blocks(*blocks_fout);

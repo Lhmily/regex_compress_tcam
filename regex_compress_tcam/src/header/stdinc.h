@@ -50,8 +50,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-
+#include <cmath>
+#define M_PI		3.14159265358979323846
 /* 
  * Configuration 
  */
@@ -123,7 +123,7 @@ void *reallocate_array( void *array, int size, size_t element_size);
 /* Random number generators */
 
 // Return a random number in [0,1] 
-inline double randfrac() { return ((double) random())/BIGINT; }
+inline double randfrac() { return ((double) rand())/BIGINT; }
 
 // Return a random integer in the range [lo,hi].
 // Not very good if range is larger than 10**7.

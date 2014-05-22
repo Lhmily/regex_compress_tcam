@@ -9,6 +9,9 @@
 #define COMPARE_H_
 #include "base.h"
 #include <stdio.h>
+#include <map>
+#include <algorithm>
+using namespace std;
 
 template<typename T>
 class cmp_pair {
@@ -87,6 +90,36 @@ public:
 			return true;
 		}
 		return false;
+	}
+};
+
+class for_each_generate_state_rate {
+private:
+	map<state, int> *state_rate_map;
+public:
+	for_each_generate_state_rate(map<state, int> *map) :
+			state_rate_map(map) {
+	}
+	void operator()(size_t cur_state) {
+		map<state, int>::iterator map_it = state_rate_map->find(cur_state);
+
+		if (map_it != state_rate_map->end()) {
+			++map_it->second;
+		} else {
+			state_rate_map->insert(make_pair(cur_state, 1));
+		}
+	}
+};
+
+class for_each_state_rate_map {
+private:
+	vector_pair_rate* vector_ptr;
+public:
+	for_each_state_rate_map(vector_pair_rate* ptr) :
+			vector_ptr(ptr) {
+	}
+	void operator()(pair<state, int> data) {
+		vector_ptr->push_back(make_pair(data.first, data.second));
 	}
 };
 #endif /* COMPARE_H_ */

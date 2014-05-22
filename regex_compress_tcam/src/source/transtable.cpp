@@ -108,6 +108,7 @@ void transtable::handle_table(state_t **state_table, int size) {
 void transtable::reorder() {
 	if (NULL == _state_rate)
 		this->generate_state_rate();
+
 	sort(_state_rate->begin(), _state_rate->end(), cmp_state_rate());
 
 	vector_index_rate *state_rate_new = new vector_index_rate;
@@ -135,42 +136,36 @@ void transtable::reorder() {
 }
 
 void transtable::generate_state_rate() {
-	map<state, int> *state_rate_map = new map<state, int> [_state_size];
-	map<state, int>::iterator map_it;
-	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
 
-		for (size_t it_j = 0; it_j < _column_size; ++it_j) {
+	assert(_state_rate==NULL);
 
-			map_it = state_rate_map[it_i].find(_table[it_i][it_j]);
-			if (map_it != state_rate_map[it_i].end()) {
-				++map_it->second;
-			} else {
-				state_rate_map[it_i].insert(
-						pair<state, int>(_table[it_i][it_j], 1));
-			}
-		}
-	}
-
+	map<state, int> *state_rate_map = new map<state, int>;
 	_state_rate = new vector_index_rate;
 	pair_index_rate *pair_rate = NULL;
+	map<state, int>::iterator map_it;
 
 	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
+
+		state_rate_map->clear();
+		//build map
+		for_each(_table[it_i], _table[it_i] + _column_size,
+				for_each_generate_state_rate(state_rate_map));
+
 		pair_rate = new pair_index_rate;
 		pair_rate->first = it_i;
 		pair_rate->second = new vector_pair_rate;
-		_state_rate->push_back(pair_rate);
 
-		for (map_it = state_rate_map[it_i].begin();
-				map_it != state_rate_map[it_i].end(); ++map_it) {
-			pair_rate->second->push_back(
-					make_pair(map_it->first, map_it->second));
-		}
+		//get
+		for_each(state_rate_map->begin(), state_rate_map->end(),
+				for_each_state_rate_map(pair_rate->second));
 
 		sort(pair_rate->second->begin(), pair_rate->second->end(),
 				cmp_pair<pair<state, int> >());
+
+		_state_rate->push_back(pair_rate);
 	}
 
-	delete[] state_rate_map;
+	delete state_rate_map;
 
 }
 
@@ -178,7 +173,7 @@ void transtable::replace_table() {
 	size_t *state_new = new size_t[_state_size];
 
 	for (size_t it = 0; it < _state_size; ++it) {
-		state_new[it] = _state_rate->operator [](it)->first;
+		state_new[it] = _state_rate->at(it)->first;
 	}
 
 	state_t **temp = new state_t*[_state_size];
@@ -191,33 +186,35 @@ void transtable::replace_table() {
 	}
 
 	delete[] temp;
-	size_t old_state = 0, new_state = 0;
 
 	for (size_t it_i = 0; it_i < _state_size; ++it_i) {
 		for (size_t it_j = 0; it_j < _column_size; ++it_j) {
 
-			old_state = _table[it_i][it_j];
-			for (size_t it = 0; it < _state_size; ++it) {
-				if (state_new[it] == old_state) {
-					new_state = it;
-					break;
-				}
-			}
-
-			_table[it_i][it_j] = new_state;
+			_table[it_i][it_j] = find(state_new, state_new + _state_size,
+					_table[it_i][it_j]) - state_new;
 		}
 	}
-
+	delete[] state_new;
 	this->release_state_rate();
+	ofstream abc;
+	abc.open("YES.txt");
+	abc << "state_size" << _state_size;
+	for (size_t it = 0; it < _state_size; ++it) {
+		abc << endl;
+		for (size_t jt = 0; jt < _column_size; ++jt) {
+			abc << _table[it][jt] << "\t";
+		}
+	}
 	this->generate_state_rate();
 }
 void transtable::release_state_rate() {
 	if (NULL == _state_rate)
 		return;
 
-	for (vector_index_rate::iterator it = _state_rate->begin();
-			it != _state_rate->end(); ++it)
-		delete (*it)->second;
+	for_each(_state_rate->begin(), _state_rate->end(), [](pair_index_rate* it) {
+		delete it->second;
+		delete it;
+	});
 
 	delete _state_rate;
 	_state_rate = NULL;
@@ -231,15 +228,14 @@ void transtable::release_blocks() {
 	}
 	delete[] _block_index;
 	_block_index = NULL;
-	vector<pair<size_t, size_t*> >::iterator it;
-	for (size_t i = 0; i < _block_num; ++i) {
-		for (it = _vector_blocks[i]->begin(); it != _vector_blocks[i]->end();
-				++it) {
-			delete[] it->second;
-		}
-		delete _vector_blocks[i];
-	}
 
+	for_each(_vector_blocks, _vector_blocks + _block_num,
+			[](vector<pair<size_t, size_t*> > * cur_block) {
+				for_each(cur_block->begin(),cur_block->end(),[](pair<size_t, size_t*> cur) {
+							delete []cur.second;
+						});
+				delete cur_block;
+			});
 	delete[] _vector_blocks;
 	_vector_blocks = NULL;
 
@@ -371,7 +367,7 @@ void transtable::print_blocks_fun(ofstream &fout, size_t index) const {
 	size_t sum_prefix = 0;
 	for (size_t it = 0; it < _block_num; ++it) {
 		if (0 != it)
-			sum_prefix += _vector_blocks[it-1]->size();
+			sum_prefix += _vector_blocks[it - 1]->size();
 
 		fout << "#" << sum_prefix + _block_index[index][it] << "\t";
 	}
