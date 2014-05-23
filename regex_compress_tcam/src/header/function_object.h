@@ -13,20 +13,20 @@
 #include <algorithm>
 using namespace std;
 
-template<typename T>
 class cmp_pair {
 public:
-	bool operator()(const T &o1, const T &o2) const {
+	bool operator()(const pair<state, int> &o1, const pair<state, int> &o2) {
 		return o1.second >= o2.second;
 	}
 };
 
 class cmp_state_rate {
 public:
-	bool operator()(pair_index_rate* o1, pair_index_rate* o2) const {
+	bool operator()(pair<size_t, vector<pair<state, int> >*>* o1,
+			pair<size_t, vector<pair<state, int> >*>* o2) {
 
-		vector_pair_rate* a1 = o1->second;
-		vector_pair_rate* a2 = o2->second;
+		vector<pair<state, int> >* a1 = o1->second;
+		vector<pair<state, int> >* a2 = o2->second;
 		int size_a = a1->size();
 		int size_b = a2->size();
 		int size_min = size_a < size_b ? size_a : size_b;
@@ -44,29 +44,6 @@ public:
 			return o1->first < o2->first;
 		}
 		return size_a < size_b;
-	}
-};
-
-class remove_copy_if_reorder {
-private:
-	size_t state;
-public:
-	remove_copy_if_reorder(size_t s) :
-			state(s) {
-	}
-	bool operator ()(pair_index_rate* obj) {
-
-		return obj->second->at(0).first == state ? false : true;
-	}
-};
-class remove_if_reorder: remove_copy_if_reorder {
-public:
-	remove_if_reorder(size_t s) :
-			remove_copy_if_reorder(s) {
-	}
-	bool operator ()(pair_index_rate* obj) {
-
-		return !(remove_copy_if_reorder::operator ()(obj));
 	}
 };
 
@@ -104,7 +81,8 @@ public:
 		map<state, int>::iterator map_it = state_rate_map->find(cur_state);
 
 		if (map_it != state_rate_map->end()) {
-			++map_it->second;
+			//++map_it->second;
+			map_it->second += 1;
 		} else {
 			state_rate_map->insert(make_pair(cur_state, 1));
 		}
@@ -113,9 +91,9 @@ public:
 
 class for_each_state_rate_map {
 private:
-	vector_pair_rate* vector_ptr;
+	vector<pair<state, int> >* vector_ptr;
 public:
-	for_each_state_rate_map(vector_pair_rate* ptr) :
+	for_each_state_rate_map(vector<pair<state, int> > *ptr) :
 			vector_ptr(ptr) {
 	}
 	void operator()(pair<state, int> data) {

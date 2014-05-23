@@ -158,17 +158,27 @@ void handle_compress(DFA *dfa) {
 
 	ofstream *blocks_fout = new ofstream();
 	(*blocks_fout).open("blocks.txt");
+
+	ofstream *blocks_code_fout = new ofstream();
+	(*blocks_code_fout).open("blocks_code.txt");
+
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
-	//table->reorder();
+	table->reorder();
 
-	//table->replace_table();
+	table->replace_table();
 	table->print_table(*table_fout);
+
 	table->generate_blocks(32);
 	table->print_blocks(*blocks_fout);
-	//table->compress_blocks();
+
+	table->compress_blocks();
+	table->print_blocks_code(*blocks_code_fout);
+
 	table_fout->close();
 	blocks_fout->close();
+	blocks_code_fout->close();
+	delete blocks_code_fout;
 	delete table_fout;
 	delete blocks_fout;
 }

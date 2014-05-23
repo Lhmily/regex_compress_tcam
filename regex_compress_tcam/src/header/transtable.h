@@ -27,7 +27,11 @@ using namespace std;
 
 class transtable {
 private:
-	typedef vector<string> CODE;
+	/*
+	 * pair<src code, dst code>
+	 */
+	typedef vector<pair<string, string> > CODE;
+	typedef CODE* CODE_PTR;
 	/*
 	 * base information
 	 */
@@ -37,7 +41,7 @@ private:
 	state_t **_table;
 	vector<state> **_header;
 
-	vector_index_rate *_state_rate;
+	pair<size_t, vector<pair<state, int> >*> **_state_rate;
 
 	/*
 	 * blocks information
@@ -46,6 +50,7 @@ private:
 	int _block_bits;
 	int _state_bits;
 	size_t _block_num;
+	size_t _total_block_num;
 	size_t **_block_index;
 
 	vector<pair<size_t, size_t*> > **_vector_blocks;
@@ -53,7 +58,7 @@ private:
 	/*
 	 *blocks encode
 	 */
-	CODE **_vector_blocks_code;
+	CODE_PTR **_vector_blocks_code;
 private:
 	typedef void (transtable::*print_characters_fun)(ofstream &fout,
 			size_t index) const;
@@ -85,7 +90,7 @@ public:
 	void generate_blocks(int block_size);
 	void compress_blocks();
 	void handle_block_code(const size_t *block, int index, int size,
-			vector<string>* vector_code);
+			CODE_PTR vector_code);
 
 	//print to file
 	/*
@@ -97,6 +102,7 @@ public:
 	 * print the blocks detail and 256 input characters block index after calling generate_blocks().
 	 */
 	void print_blocks(ofstream &fout) const;
+	void print_blocks_code(ofstream &fout) const;
 
 };
 
