@@ -407,7 +407,7 @@ string transtable::state_convert_code(state s, const int bits) const {
 }
 
 void transtable::handle_block_code(const size_t *block, int index, int size,
-		CODE_PTR vector_code) {
+		size_t block_index, BLOCK_CODE_PTR vector_code) {
 	set<size_t> set_temp;
 	for (int it = 0; it < size; ++it) {
 		set_temp.insert(block[index + it]);
@@ -415,46 +415,55 @@ void transtable::handle_block_code(const size_t *block, int index, int size,
 	if (1 == set_temp.size()) {
 //compress
 		int suffix_num = ceil(log(size) / log(2));
-		string src_code = state_convert_code(index, _block_bits);
-		for (int suffix_it = _block_bits - suffix_num; suffix_it < _block_bits;
+		string src_code = state_convert_code(index + block_index * _block_size,
+				_state_bits);
+		for (int suffix_it = _state_bits - suffix_num; suffix_it < _state_bits;
 				++suffix_it) {
 			src_code[suffix_it] = '*';
 		}
 //save
 		string dst_code = state_convert_code(block[index], _state_bits);
-		vector_code->push_back(make_pair(src_code, dst_code));
+
+		trans_CODE_ptr code_ptr = new trans_CODE;
+		code_ptr->src_code = src_code;
+		code_ptr->dst_code.code = dst_code;
+		code_ptr->dst_code.state = block[index];
+		vector_code->push_back(code_ptr);
 		return;
 	} else {
 		int new_size = size / 2;
-		handle_block_code(block, index, new_size, vector_code);
-		handle_block_code(block, index + new_size, new_size, vector_code);
+		handle_block_code(block, index, new_size, block_index, vector_code);
+		handle_block_code(block, index + new_size, new_size, block_index,
+				vector_code);
 	}
 
 }
 
 void transtable::compress_blocks() {
 
-	_vector_blocks_code = new CODE_PTR *[_block_num];
+	_vector_blocks_code = new BLOCK_CODE_PTR *[_block_num];
 	size_t group_block_size = 0;
 
 	for (size_t it = 0; it < _block_num; ++it) {
 		group_block_size = _vector_blocks[it]->size();
 
-		_vector_blocks_code[it] = new CODE_PTR[group_block_size];
+		_vector_blocks_code[it] = new BLOCK_CODE_PTR[group_block_size];
 
 		for (size_t jt = 0; jt < group_block_size; ++jt) {
-			CODE_PTR code_ptr = new CODE;
+			BLOCK_CODE_PTR code_ptr = new BLOCK_CODE;
 			handle_block_code(_vector_blocks[it]->at(jt).second, 0,
-					_vector_blocks[it]->at(jt).first, code_ptr);
+					_vector_blocks[it]->at(jt).first, it, code_ptr);
 			_vector_blocks_code[it][jt] = code_ptr;
+
 		}
 	}
+
 }
 void transtable::print_blocks_code(ofstream &fout) const {
 	size_t count = 0;
 	size_t group_block_size = 0;
 	size_t trans_num = 0;
-	CODE::iterator iterator_code;
+	BLOCK_CODE::iterator iterator_code;
 	for (size_t i = 0; i < _block_num; ++i) {
 		group_block_size = _vector_blocks[i]->size();
 
@@ -467,8 +476,9 @@ void transtable::print_blocks_code(ofstream &fout) const {
 			for (iterator_code = _vector_blocks_code[i][it]->begin();
 					iterator_code != _vector_blocks_code[i][it]->end();
 					++iterator_code) {
-				fout << "\t\t" << iterator_code->first << "->"
-						<< iterator_code->second << endl;
+				fout << "\t\t" << (*iterator_code)->src_code << "->"
+						<< (*iterator_code)->dst_code.code << "("
+						<< (*iterator_code)->dst_code.state << ")" << endl;
 			}
 
 			fout << endl;

@@ -30,8 +30,20 @@ private:
 	/*
 	 * pair<src code, dst code>
 	 */
-	typedef vector<pair<string, string> > CODE;
-	typedef CODE* CODE_PTR;
+
+	typedef struct {
+		size_t state;
+		string code;
+	} DST_CODE;
+
+	typedef string SRC;
+	typedef struct {
+		SRC src_code;
+		DST_CODE dst_code;
+	} trans_CODE, *trans_CODE_ptr;
+	typedef vector<trans_CODE_ptr> BLOCK_CODE;
+
+	typedef BLOCK_CODE *BLOCK_CODE_PTR;
 	/*
 	 * base information
 	 */
@@ -58,7 +70,7 @@ private:
 	/*
 	 *blocks encode
 	 */
-	CODE_PTR **_vector_blocks_code;
+	BLOCK_CODE_PTR **_vector_blocks_code;
 private:
 	typedef void (transtable::*print_characters_fun)(ofstream &fout,
 			size_t index) const;
@@ -90,7 +102,7 @@ public:
 	void generate_blocks(int block_size);
 	void compress_blocks();
 	void handle_block_code(const size_t *block, int index, int size,
-			CODE_PTR vector_code);
+			size_t block_index, BLOCK_CODE_PTR vector_code);
 
 	//print to file
 	/*
