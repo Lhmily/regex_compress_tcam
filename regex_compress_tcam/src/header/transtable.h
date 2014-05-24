@@ -28,23 +28,6 @@ using namespace std;
 class transtable {
 private:
 	/*
-	 * pair<src code, dst code>
-	 */
-
-	typedef struct {
-		size_t state;
-		string code;
-	} DST_CODE;
-
-	typedef string SRC;
-	typedef struct {
-		SRC src_code;
-		DST_CODE dst_code;
-	} trans_CODE, *trans_CODE_ptr;
-	typedef vector<trans_CODE_ptr> BLOCK_CODE;
-
-	typedef BLOCK_CODE *BLOCK_CODE_PTR;
-	/*
 	 * base information
 	 */
 	size_t _state_size;
@@ -80,6 +63,8 @@ private:
 
 	//compress
 	string state_convert_code(state s, const int bits) const;
+	void compress_each_block();
+	trans_CODE_ptr get_CODE(size_t src, int mask_index, size_t dst);
 
 	//print
 	void print_table_fun(ofstream &fout, size_t it) const;

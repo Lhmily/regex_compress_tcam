@@ -100,4 +100,5 @@ public:
 		vector_ptr->push_back(make_pair(data.first, data.second));
 	}
 };
+
 #endif /* COMPARE_H_ */

@@ -413,22 +413,12 @@ void transtable::handle_block_code(const size_t *block, int index, int size,
 		set_temp.insert(block[index + it]);
 	}
 	if (1 == set_temp.size()) {
-//compress
+		//compress
 		int suffix_num = ceil(log(size) / log(2));
-		string src_code = state_convert_code(index + block_index * _block_size,
-				_state_bits);
-		for (int suffix_it = _state_bits - suffix_num; suffix_it < _state_bits;
-				++suffix_it) {
-			src_code[suffix_it] = '*';
-		}
-//save
-		string dst_code = state_convert_code(block[index], _state_bits);
 
-		trans_CODE_ptr code_ptr = new trans_CODE;
-		code_ptr->src_code = src_code;
-		code_ptr->dst_code.code = dst_code;
-		code_ptr->dst_code.state = block[index];
-		vector_code->push_back(code_ptr);
+		vector_code->push_back(
+				get_CODE(index + block_index * _block_size,
+						_state_bits - suffix_num, block[index]));
 		return;
 	} else {
 		int new_size = size / 2;
@@ -437,6 +427,88 @@ void transtable::handle_block_code(const size_t *block, int index, int size,
 				vector_code);
 	}
 
+}
+
+void transtable::compress_each_block() {
+	BLOCK_CODE::iterator block_it, cur_it;
+	BLOCK_CODE_PTR cur_block = NULL;
+	size_t group_block_size = 0;
+	map<state, size_t> statistics_map;
+	map<state, size_t>::iterator map_it;
+
+	for (size_t it = 0; it < _block_num; ++it) {
+
+		group_block_size = _vector_blocks[it]->size();
+
+		for (size_t jt = 0; jt < group_block_size; ++jt) {
+			cur_block = _vector_blocks_code[it][jt];
+
+			if (3 <= cur_block->size()) {
+				statistics_map.clear();
+
+				for (block_it = cur_block->begin();
+						block_it != cur_block->end(); ++block_it) {
+
+					size_t dst_state = (*block_it)->dst_code.state;
+					map_it = statistics_map.find(dst_state);
+
+					if (map_it != statistics_map.end()) {
+						++map_it->second;
+					} else {
+						statistics_map.insert(make_pair(dst_state, 1));
+					}
+				}
+				//find the max element of statistics_map
+				map_it =
+						max_element(statistics_map.begin(),
+								statistics_map.end(),
+								[](pair<state,size_t> max,pair<state,size_t> elem) {
+									return elem.second>max.second;
+								});
+				if (map_it->second > 1) {
+					//
+					size_t dst_state = map_it->first;
+
+					block_it = cur_it = cur_block->begin();
+					while (block_it != cur_block->end()) {
+
+						if ((*block_it)->dst_code.state == dst_state) {
+							delete (*block_it);
+						} else {
+							*cur_it = *block_it;
+							++cur_it;
+						}
+						++block_it;
+					}
+
+					cur_block->erase(cur_it, cur_block->end());
+
+					cur_block->push_back(
+							get_CODE(it * _block_size,
+									_state_bits - _block_bits, dst_state));
+
+				}
+
+			}
+		}
+	}
+}
+
+trans_CODE_ptr transtable::get_CODE(size_t src, int mask_index, size_t dst) {
+	trans_CODE_ptr ret = new trans_CODE;
+	string src_code = state_convert_code(src, _state_bits);
+
+	for (int replace_index = mask_index; replace_index < _state_bits;
+			++replace_index) {
+		src_code[replace_index] = '*';
+	}
+
+	string dst_code = state_convert_code(dst, _state_bits);
+	ret->src_code = src_code;
+	ret->dst_code.state = dst;
+	ret->dst_code.code = dst_code;
+
+	return ret;
 }
 
 void transtable::compress_blocks() {
@@ -457,7 +529,7 @@ void transtable::compress_blocks() {
 
 		}
 	}
-
+	this->compress_each_block();
 }
 void transtable::print_blocks_code(ofstream &fout) const {
 	size_t count = 0;
@@ -485,3 +557,4 @@ void transtable::print_blocks_code(ofstream &fout) const {
 		}
 	}
 }
+
