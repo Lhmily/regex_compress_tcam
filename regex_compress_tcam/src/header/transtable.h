@@ -54,6 +54,13 @@ private:
 	 *blocks encode
 	 */
 	BLOCK_CODE_PTR **_vector_blocks_code;
+	BLOCK_CODE_PTR *_transitions;
+	/*
+	 * statistics information
+	 */
+	size_t _total_final_transitions_num;
+	size_t _total_final_blocks_num;
+	size_t *_final_blocks_num_each_input;
 private:
 	typedef void (transtable::*print_characters_fun)(ofstream &fout,
 			size_t index) const;
@@ -64,21 +71,25 @@ private:
 	//compress
 	string state_convert_code(state s, const int bits) const;
 	void compress_each_block();
-	trans_CODE_ptr get_CODE(string src_code, int mask_index, size_t dst);
+	trans_CODE_ptr get_CODE(string src_code, int mask_index, int mask_size,
+			size_t dst);
 
 	//print
 	void print_table_fun(ofstream &fout, size_t it) const;
 	void print_blocks_fun(ofstream &fout, size_t index) const;
 	void print_characters(ofstream &fout, print_characters_fun fun) const;
+	void print_transitions_fun(ofstream &fout, size_t it) const;
 
 	//release
 	void release_state_rate();
 	void release_blocks();
 	void release_vector_blocks_code();
+	void release_transitions();
 	//encode
 	void handle_block_code(const size_t *block, int index, int size,
 			size_t block_index, BLOCK_CODE_PTR vector_code);
-	void handle_each_block_code(BLOCK_CODE_PTR &cur_block);
+	void handle_each_block_code(BLOCK_CODE_PTR &cur_block, int mask_index,
+			int mask_size);
 
 public:
 	transtable();
@@ -107,6 +118,19 @@ public:
 	void print_blocks(ofstream &fout) const;
 	void print_blocks_code(ofstream &fout) const;
 
+	void print_transitions(ofstream &fout) const;
+	/*
+	 * getters and setters
+	 */
+	size_t getTotalFinalBlocksNum() const;
+
+	size_t getTotalFinalTransitionsNum() const;
+	size_t getStateBits() const;
+	vector<state> ** getHeader() const;
+	size_t getBlockSize() const;
+	size_t getInputBlockSize() const;
+	size_t* getFinalBlocksNumEachInput() const;
+	size_t getColumnSize() const;
 };
 
 #endif /* TRANSTABLE_H_ */
