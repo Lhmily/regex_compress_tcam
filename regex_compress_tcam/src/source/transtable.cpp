@@ -13,6 +13,7 @@ transtable::transtable() {
 	_header = NULL;
 	_state_rate = NULL;
 	_block_index = NULL;
+	_vector_blocks_code = NULL;
 	_block_size = 0;
 	_block_bits = 0;
 	_column_size = 0;
@@ -39,8 +40,32 @@ transtable::~transtable() {
 		delete[] _table;
 		_table = NULL;
 	}
-	this->release_state_rate();
+
+	this->release_vector_blocks_code();
 	this->release_blocks();
+	this->release_state_rate();
+}
+
+void transtable::release_vector_blocks_code() {
+	if (NULL == _vector_blocks_code)
+		return;
+	size_t group_block_size = 0;
+	BLOCK_CODE::iterator iterator_code;
+	for (size_t i = 0; i < _block_num; ++i) {
+		group_block_size = _vector_blocks[i]->size();
+
+		for (size_t it = 0; it < group_block_size; ++it) {
+			for (iterator_code = _vector_blocks_code[i][it]->begin();
+					iterator_code != _vector_blocks_code[i][it]->end();
+					++iterator_code) {
+				delete (*iterator_code);
+			}
+			delete _vector_blocks_code[i][it];
+		}
+		delete[] _vector_blocks_code[i];
+	}
+	delete[] _vector_blocks_code;
+	_vector_blocks_code = NULL;
 }
 
 void transtable::handle_table(state_t **state_table, int size) {
@@ -201,6 +226,7 @@ void transtable::replace_table() {
 
 	this->generate_state_rate();
 }
+
 void transtable::release_state_rate() {
 	if (NULL == _state_rate)
 		return;

@@ -74,6 +74,7 @@ private:
 	//release
 	void release_state_rate();
 	void release_blocks();
+	void release_vector_blocks_code();
 
 public:
 	transtable();
