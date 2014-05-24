@@ -64,7 +64,7 @@ private:
 	//compress
 	string state_convert_code(state s, const int bits) const;
 	void compress_each_block();
-	trans_CODE_ptr get_CODE(size_t src, int mask_index, size_t dst);
+	trans_CODE_ptr get_CODE(string src_code, int mask_index, size_t dst);
 
 	//print
 	void print_table_fun(ofstream &fout, size_t it) const;
@@ -75,6 +75,10 @@ private:
 	void release_state_rate();
 	void release_blocks();
 	void release_vector_blocks_code();
+	//encode
+	void handle_block_code(const size_t *block, int index, int size,
+			size_t block_index, BLOCK_CODE_PTR vector_code);
+	void handle_each_block_code(BLOCK_CODE_PTR &cur_block);
 
 public:
 	transtable();
@@ -85,10 +89,11 @@ public:
 	void reorder();
 
 	void replace_table();
+
 	void generate_blocks(int block_size);
 	void compress_blocks();
-	void handle_block_code(const size_t *block, int index, int size,
-			size_t block_index, BLOCK_CODE_PTR vector_code);
+	//encode
+	void generate_bolcks_code();
 
 	//print to file
 	/*
