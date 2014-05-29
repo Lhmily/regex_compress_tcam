@@ -4,20 +4,15 @@
  *      Author: Lhmily
  */
 
-#include <sys/reent.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <fstream>
+#include <strstream>
 
 #include "../header/dfa.h"
 #include "../header/nfa.h"
 #include "../header/parser.h"
-#include "../header/stdinc.h"
-#include "../header/transtable.h"
 
-using namespace std;
+#include "../header/tcammodel.h"
+
+//using namespace std;
 
 void init_conf(void);
 static int parse_arguments(int argc, char **argv);
@@ -52,7 +47,6 @@ int main(int argc, char **argv) {
 
 	handle_regex_file(nfa, dfa);
 	handle_compress(dfa);
-
 	return 0;
 }
 /* initialize the configuration */
@@ -156,15 +150,6 @@ void handle_compress(DFA *dfa) {
 	ofstream *table_fout = new ofstream();
 	(*table_fout).open("transition_table.txt");
 
-	ofstream *blocks_fout = new ofstream();
-	(*blocks_fout).open("blocks.txt");
-
-	ofstream *blocks_code_fout = new ofstream();
-	(*blocks_code_fout).open("blocks_code.txt");
-
-	ofstream *inputs_code_fout = new ofstream();
-	(*inputs_code_fout).open("inputs_code.txt");
-
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
 	table->reorder();
@@ -172,23 +157,66 @@ void handle_compress(DFA *dfa) {
 	table->replace_table();
 	table->print_table(*table_fout);
 
-	table->generate_blocks(32);
-	table->print_blocks(*blocks_fout);
+	ofstream *blocks_fout = new ofstream[8];
+	ofstream *blocks_code_fout = new ofstream[8];
+	ofstream *inputs_code_fout = new ofstream[8];
 
-	table->compress_blocks();
-	table->print_blocks_code(*blocks_code_fout);
+	string pre_blocks_fout = "blocks_";
+	string pre_blocks_code_fout = "blocks_code_";
+	string pre_inputs_code_fout = "inputs_code_";
+	string suff_str = ".txt";
+	string block_str;
+	strstream ss;
 
-	table->generate_bolcks_code();
-	table->print_transitions(*inputs_code_fout);
+	string file_str;
+	tcam_model *tcam = new tcam_model(table);
+	tcam->init();
+	size_t block_size = 16;
+	//block_size[]
+	for (int i = 0; i < 8; i++) {
+		block_size <<= 1;		// = 32 * pow(2, i);
+		ss.clear();
+		ss << block_size;
+		block_str.clear();
+		ss >> block_str;
 
+//		file_str = pre_blocks_fout + block_str + suff_str;
+//		blocks_fout[i].open(file_str.data());
+//
+//		file_str = pre_blocks_code_fout + block_str + suff_str;
+//		blocks_code_fout[i].open(file_str.data());
 
+		file_str = pre_inputs_code_fout + block_str + suff_str;
+		inputs_code_fout[i].open(file_str.data());
+
+//		table->release_vector_blocks_code();
+//		table->release_blocks();
+		//table->release_state_rate();
+		table->release_transitions();
+
+//		table->generate_blocks(block_size);
+//
+//		table->print_blocks(blocks_fout[i]);
+//
+//		table->compress_blocks();
+//		table->print_blocks_code(blocks_code_fout[i]);
+
+		table->generate_bolcks_code(block_size);
+		table->print_transitions(inputs_code_fout[i]);
+
+		tcam->print();
+
+//		blocks_fout[i].close();
+//		blocks_code_fout[i].close();
+		inputs_code_fout[i].close();
+	}
 
 	table_fout->close();
-	blocks_fout->close();
-	blocks_code_fout->close();
-	inputs_code_fout->close();
-	delete blocks_code_fout;
+
 	delete table_fout;
-	delete blocks_fout;
-	delete inputs_code_fout;
+	delete[] blocks_fout;
+	delete[] inputs_code_fout;
+	delete[] blocks_code_fout;
+	delete tcam;
+	delete table;
 }

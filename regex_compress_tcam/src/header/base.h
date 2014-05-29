@@ -12,9 +12,8 @@
 #include <vector>
 #include <string>
 
-using std::pair;
-using std::vector;
-using std::string;
+
+using namespace std;
 
 typedef size_t state;
 typedef struct {
@@ -30,5 +29,10 @@ typedef struct {
 typedef vector<trans_CODE_ptr> BLOCK_CODE;
 
 typedef BLOCK_CODE *BLOCK_CODE_PTR;
+
+typedef struct {
+	double search_power;
+	double search_time;
+} POWER_T;
 
 #endif /* BASE_H_ */

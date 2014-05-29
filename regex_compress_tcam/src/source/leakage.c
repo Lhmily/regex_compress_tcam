@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "../header/leakage.h"
+#include "../header/leakage_function.h"
 
 /*dt: added for windows compatibility */
 #ifndef M_PI

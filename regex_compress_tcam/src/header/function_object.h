@@ -8,10 +8,9 @@
 #ifndef COMPARE_H_
 #define COMPARE_H_
 #include "base.h"
-#include <stdio.h>
 #include <map>
 #include <algorithm>
-using namespace std;
+//using namespace std;
 
 class cmp_pair {
 public:
@@ -98,6 +97,51 @@ public:
 	}
 	void operator()(pair<state, int> data) {
 		vector_ptr->push_back(make_pair(data.first, data.second));
+	}
+};
+
+class find_if_vector_src_code {
+private:
+	string &_to_find_src_code;
+	size_t _prefix;
+public:
+	find_if_vector_src_code(string &s, size_t prefix) :
+			_to_find_src_code(s), _prefix(prefix) {
+	}
+	bool operator()(string &s_it) const {
+		return 0 == s_it.compare(0, _prefix, _to_find_src_code, 0, _prefix);
+	}
+};
+
+class find_if_bit {
+private:
+	size_t _bit;
+public:
+	find_if_bit(size_t bit) :
+			_bit(bit) {
+	}
+	bool operator()(trans_CODE_ptr trans) {
+		return trans->src_code[_bit] != '0';
+	}
+};
+
+class for_each_map_count {
+private:
+	map<state, size_t> *_map_count;
+public:
+	for_each_map_count(map<state, size_t> *map_count) :
+			_map_count(map_count) {
+	}
+	void operator()(trans_CODE_ptr trans) {
+		map<state, size_t>::iterator map_it;
+		map_it = _map_count->find(trans->dst_code.state);
+		if (map_it == _map_count->end()) {
+			//not found
+			_map_count->insert(make_pair(trans->dst_code.state, 1));
+		} else {
+			//found
+			map_it->second += 1;
+		}
 	}
 };
 

@@ -8,22 +8,14 @@
 #ifndef TRANSTABLE_H_
 #define TRANSTABLE_H_
 
-#include <stddef.h>
-#include <stdio.h>
 #include <iostream>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <string>
 #include <set>
 #include <iterator>
 #include <fstream>
 #include <cassert>
+
 #include "stdinc.h"
 #include "function_object.h"
-#include "base.h"
-
-using namespace std;
 
 class transtable {
 private:
@@ -46,6 +38,7 @@ private:
 	int _state_bits;
 	size_t _block_num;
 	size_t _total_block_num;
+	size_t _total_block_entry_size;
 	size_t **_block_index;
 
 	vector<pair<size_t, size_t*> > **_vector_blocks;
@@ -80,16 +73,15 @@ private:
 	void print_characters(ofstream &fout, print_characters_fun fun) const;
 	void print_transitions_fun(ofstream &fout, size_t it) const;
 
-	//release
-	void release_state_rate();
-	void release_blocks();
-	void release_vector_blocks_code();
-	void release_transitions();
 	//encode
-	void handle_block_code(const size_t *block, int index, int size,
+	void handle_block_code(size_t *block, int index, int size,
 			size_t block_index, BLOCK_CODE_PTR vector_code);
-	void handle_each_block_code(BLOCK_CODE_PTR &cur_block, int mask_index,
+	void handle_each_block_code(BLOCK_CODE_PTR cur_block, int mask_index,
 			int mask_size);
+	void handle_each_input(size_t *block, int index, int size,
+			BLOCK_CODE_PTR vector_code);
+	void generate_default_transition(BLOCK_CODE_PTR vector_code,
+			size_t before_size, int mask_bit);
 
 public:
 	transtable();
@@ -104,7 +96,7 @@ public:
 	void generate_blocks(int block_size);
 	void compress_blocks();
 	//encode
-	void generate_bolcks_code();
+	void generate_bolcks_code(size_t block_size);
 
 	//print to file
 	/*
@@ -131,6 +123,14 @@ public:
 	size_t getInputBlockSize() const;
 	size_t* getFinalBlocksNumEachInput() const;
 	size_t getColumnSize() const;
+	size_t getTotalBlockNum() const;
+	size_t getTotalBlockEntrySize() const;
+
+	//release
+	void release_state_rate();
+	void release_blocks();
+	void release_vector_blocks_code();
+	void release_transitions();
 };
 
 #endif /* TRANSTABLE_H_ */

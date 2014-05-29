@@ -81,6 +81,8 @@
 #ifndef TCAM_POWER_H
 #define TCAM_POWER_H
 
+typedef int int32_t;
+
 /*  feature size in um */
 #define TECH_USED 	0.80
 #define FEATURESIZE 	TECH_USED
