@@ -80,8 +80,10 @@ private:
 			int mask_size);
 	void handle_each_input(size_t *block, int index, int size,
 			BLOCK_CODE_PTR vector_code);
-	void generate_default_transition(BLOCK_CODE_PTR vector_code,
-			size_t before_size, int mask_bit);
+	size_t generate_default_transition(BLOCK_CODE_PTR vector_code, size_t index,
+			size_t length, int mask_bit);
+	size_t default_transition_compress(BLOCK_CODE_PTR vector_code, size_t index,
+			size_t length, int mask_bit);
 
 public:
 	transtable();

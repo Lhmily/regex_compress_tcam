@@ -153,7 +153,7 @@ void handle_compress(DFA *dfa) {
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
 	table->reorder();
-
+//
 	table->replace_table();
 	table->print_table(*table_fout);
 
@@ -174,40 +174,24 @@ void handle_compress(DFA *dfa) {
 	size_t block_size = 16;
 	//block_size[]
 	for (int i = 0; i < 8; i++) {
-		block_size <<= 1;		// = 32 * pow(2, i);
+		block_size <<= 1;
 		ss.clear();
 		ss << block_size;
 		block_str.clear();
 		ss >> block_str;
 
-//		file_str = pre_blocks_fout + block_str + suff_str;
-//		blocks_fout[i].open(file_str.data());
-//
-//		file_str = pre_blocks_code_fout + block_str + suff_str;
-//		blocks_code_fout[i].open(file_str.data());
+
 
 		file_str = pre_inputs_code_fout + block_str + suff_str;
 		inputs_code_fout[i].open(file_str.data());
 
-//		table->release_vector_blocks_code();
-//		table->release_blocks();
-		//table->release_state_rate();
 		table->release_transitions();
-
-//		table->generate_blocks(block_size);
-//
-//		table->print_blocks(blocks_fout[i]);
-//
-//		table->compress_blocks();
-//		table->print_blocks_code(blocks_code_fout[i]);
 
 		table->generate_bolcks_code(block_size);
 		table->print_transitions(inputs_code_fout[i]);
 
 		tcam->print();
 
-//		blocks_fout[i].close();
-//		blocks_code_fout[i].close();
 		inputs_code_fout[i].close();
 	}
 
