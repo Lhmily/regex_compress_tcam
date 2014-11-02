@@ -40,6 +40,8 @@ private:
 	size_t _total_block_num;
 	size_t _total_block_entry_size;
 	size_t **_block_index;
+	size_t _input_ascii_dst[256];
+	vector<pair<string, size_t> > _input_ascii_compress;
 
 	vector<pair<size_t, size_t*> > **_vector_blocks;
 
@@ -85,6 +87,9 @@ private:
 	size_t default_transition_compress(BLOCK_CODE_PTR vector_code, size_t index,
 			size_t length, int mask_bit);
 
+	void generate_input_ascii_dst();
+	void handle_input_ascii_compress(int index, int end);
+
 public:
 	transtable();
 	virtual ~transtable();
@@ -97,6 +102,9 @@ public:
 
 	void generate_blocks(int block_size);
 	void compress_blocks();
+
+	void compress_index_table();
+	void print_index_table();
 	//encode
 	void generate_bolcks_code(size_t block_size);
 

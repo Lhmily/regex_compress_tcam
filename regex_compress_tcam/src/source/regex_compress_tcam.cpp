@@ -147,6 +147,7 @@ void handle_regex_file(NFA *&nfa, DFA *&dfa) {
 void handle_compress(DFA *dfa) {
 	if ((dfa == NULL) || (!config.tcam))
 		return;
+	cout << "Compress..." << endl;
 	ofstream *table_fout = new ofstream();
 	(*table_fout).open("transition_table.txt");
 
@@ -156,6 +157,9 @@ void handle_compress(DFA *dfa) {
 //
 	table->replace_table();
 	table->print_table(*table_fout);
+
+	table->compress_index_table();
+	table->print_index_table();
 
 	ofstream *blocks_fout = new ofstream[8];
 	ofstream *blocks_code_fout = new ofstream[8];
@@ -179,8 +183,6 @@ void handle_compress(DFA *dfa) {
 		ss << block_size;
 		block_str.clear();
 		ss >> block_str;
-
-
 
 		file_str = pre_inputs_code_fout + block_str + suff_str;
 		inputs_code_fout[i].open(file_str.data());

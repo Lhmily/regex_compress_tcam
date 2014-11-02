@@ -25,7 +25,6 @@ transtable::transtable() {
 	_total_block_num = _block_num = _total_block_entry_size = 0;
 	_state_size = 0;
 	_total_final_transitions_num = _total_final_blocks_num = 0;
-
 }
 
 size_t transtable::getStateSize() const {
@@ -54,6 +53,7 @@ transtable::~transtable() {
 	this->release_transitions();
 
 }
+
 void transtable::release_transitions() {
 	if (NULL == _transitions)
 		return;
@@ -608,6 +608,75 @@ trans_CODE_ptr transtable::get_CODE(string src_code, int mask_index,
 	return ret;
 }
 
+void transtable::generate_input_ascii_dst() {
+	for (size_t i = 0; i < _column_size; ++i) {
+		for (state item : *(_header[i]))
+			_input_ascii_dst[item] = i;
+
+	}
+}
+
+void transtable::compress_index_table() {
+	this->generate_input_ascii_dst();
+	_input_ascii_compress.clear();
+	handle_input_ascii_compress(0, 256);
+	size_t count[256];
+	memset(count, 0, sizeof(size_t) * 256);
+	for (pair<string, size_t> item : _input_ascii_compress)
+		count[item.second] += 1;
+	size_t max = count[0], index = 0;
+	for (int i = 1; i < 256; ++i) {
+		if (count[i] > max) {
+			max = count[i];
+			index = i;
+		}
+	}
+	if (max > 1) {
+		vector<pair<string, size_t> > temp;
+		for (pair<string, size_t> item : _input_ascii_compress)
+			if (item.second != index)
+				temp.push_back(item);
+
+		_input_ascii_compress.clear();
+		for (pair<string, size_t> item : temp)
+			_input_ascii_compress.push_back(item);
+		_input_ascii_compress.push_back(make_pair("********", index));
+	}
+}
+void transtable::print_index_table() {
+	ofstream fout;
+	fout.open("input_ascii_table.txt");
+	for (pair<string, size_t> item : _input_ascii_compress) {
+		fout << item.first << " -> " << item.second << endl;
+	}
+
+}
+
+void transtable::handle_input_ascii_compress(int index, int end) {
+
+	set<size_t> set_temp;
+	for (int it = index; it < end; ++it) {
+		set_temp.insert(_input_ascii_dst[it]);
+	}
+	if (1 == set_temp.size()) {
+		//compress
+		int suffix_num = ceil(log(end - index) / log(2));
+		string src_code = this->state_convert_code(index, 8);
+
+		for (int replace_index = 8 - suffix_num; replace_index < 8;
+				++replace_index) {
+			src_code[replace_index] = '*';
+		}
+		_input_ascii_compress.push_back(
+				make_pair(src_code, _input_ascii_dst[index]));
+		return;
+	}
+
+	int new_size = (end + index) / 2;
+	this->handle_input_ascii_compress(index, new_size);
+	this->handle_input_ascii_compress(new_size, end);
+
+}
 void transtable::compress_blocks() {
 
 	_vector_blocks_code = new BLOCK_CODE_PTR *[_block_num];
@@ -759,7 +828,7 @@ size_t transtable::default_transition_compress(BLOCK_CODE_PTR vector_code,
 		if ('0' == code_ptr->src_code[prefix_bits])
 			++length_0;
 	}
-	length_1 = length - length_0-1;
+	length_1 = length - length_0 - 1;
 	ret_val = remove_size;
 	size_t remove_0 = 0;
 
@@ -910,3 +979,4 @@ size_t transtable::getTotalBlockNum() const {
 size_t transtable::getTotalBlockEntrySize() const {
 	return _total_block_entry_size;
 }
+
