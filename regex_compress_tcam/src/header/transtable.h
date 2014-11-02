@@ -136,6 +136,8 @@ public:
 	size_t getTotalBlockNum() const;
 	size_t getTotalBlockEntrySize() const;
 
+	size_t getIndexTableSize() const;
+
 	//release
 	void release_state_rate();
 	void release_blocks();

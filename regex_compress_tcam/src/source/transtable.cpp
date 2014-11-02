@@ -980,3 +980,6 @@ size_t transtable::getTotalBlockEntrySize() const {
 	return _total_block_entry_size;
 }
 
+size_t transtable::getIndexTableSize() const {
+	return this->_input_ascii_compress.size();
+}

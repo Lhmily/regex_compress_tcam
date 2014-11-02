@@ -51,12 +51,15 @@ void tcam_model::init() {
 
 			_performance[it].open("Performance_Compress.txt");
 			_performance[it] << "State size: " << _state_size << endl
-					<< "Entry bits:" << _state_bits << endl << "Blocks size"
-					<< "\t" << "avg(ns)\tavg(nj)\tavg(#start)" << "\t"
-					<< "max(ns)\tmax(nj)\tmax(#start)" << "\t"
+					<< "Entry bits:" << _state_bits << endl
+					<< "Index Table Entry Size: "
+					<< _compress_table->getIndexTableSize() << endl
+					<< "Blocks size" << "\t" << "avg(ns)\tavg(nj)\tavg(#start)"
+					<< "\t" << "max(ns)\tmax(nj)\tmax(#start)" << "\t"
 					<< "min(ns)\tmin(nj)\tmin(#start)" << "\t"
 					<< "mid(ns)\tmid(nj)\tmid(#start)" << "\t"
 					<< "total blocks number" << "\t" << "total entry size";
+
 		}
 	}
 
