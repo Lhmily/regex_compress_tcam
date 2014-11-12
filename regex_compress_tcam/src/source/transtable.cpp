@@ -754,12 +754,8 @@ size_t transtable::generate_default_transition(BLOCK_CODE_PTR vector_code,
 	size_t remove_count = 0;
 	map<state, size_t> map_count;
 	map<state, size_t>::iterator map_it;
-	BLOCK_CODE::iterator begin_it = vector_code->begin(), end_it;
-	for (size_t j = 0; j < index; ++j)
-		++begin_it;
-	end_it = begin_it;
-	for (size_t j = 0; j < length; ++j)
-		++end_it;
+	BLOCK_CODE::iterator begin_it = vector_code->begin() + index;
+	BLOCK_CODE::iterator end_it = begin_it + length;
 
 	for_each(begin_it, end_it, for_each_map_count(&map_count));
 
@@ -807,6 +803,106 @@ size_t transtable::generate_default_transition(BLOCK_CODE_PTR vector_code,
 	}
 	return remove_count;
 }
+size_t transtable::handle_defcompr(BLOCK_CODE_PTR vector_code, size_t index,
+		size_t prefix_conut, size_t &len) {
+	size_t remove_count = 0;
+	map<state, size_t> map_count;
+	map<state, size_t>::iterator map_it;
+	BLOCK_CODE::iterator begin_it = vector_code->begin() + index, temp_it,
+			end_it;
+	string prefix = (*begin_it)->src_code.substr(0, prefix_conut);
+	temp_it = begin_it;
+	len = 0;
+	while (temp_it != vector_code->end()) {
+		if (prefix != (*temp_it)->src_code.substr(0, prefix_conut))
+			break;
+		++len;
+		++temp_it;
+	}
+	if (len <= 1)
+		return 0;
+	for_each(begin_it, begin_it + len, for_each_map_count(&map_count));
+
+	map_it = max_element(map_count.begin(), map_count.end(),
+			[](pair<state,size_t> max,pair<state,size_t> elem) {
+				return elem.second > max.second;
+			});
+	if (map_it->second <= 1)
+		return 0;
+	end_it = begin_it + len;
+	size_t dst_0 = map_it->first;
+	BLOCK_CODE::iterator cur_index_it = begin_it, it = begin_it;
+	trans_CODE_ptr code_ptr = NULL;
+
+	while (it != end_it) {
+		if ((*it)->dst_code.state != dst_0) {
+			*cur_index_it = *it;
+			++cur_index_it;
+		} else {
+			//YES
+			if (NULL != code_ptr) {
+				delete *it;
+			} else {
+				code_ptr = *it;
+			}
+			++remove_count;
+		}
+		++it;
+	}
+
+	for (int i = prefix_conut; i < _state_bits; ++i) {
+		code_ptr->src_code[i] = '*';
+	}
+	*cur_index_it = code_ptr;
+	++cur_index_it;
+
+	--remove_count;
+	it = cur_index_it;
+	for (size_t j = 0; j < remove_count; ++j)
+		++it;
+	while (it != vector_code->end())
+		*cur_index_it++ = *it++;
+
+	vector_code->erase(cur_index_it, vector_code->end());
+	//vector_code->push_back(code_ptr);
+
+	return remove_count;
+}
+void transtable::default_transition_compression(BLOCK_CODE_PTR vector_code) {
+	BLOCK_CODE::iterator cur_it = vector_code->begin(), end_it =
+			vector_code->end();
+	BLOCK_CODE::iterator cur_it_temp = cur_it, end_it_temp = cur_it;
+	size_t len = 0, index = 0, remcount = 0;
+	int prefix_count = _state_bits - 1, half_state_bit = _state_bits / 2;
+	string prefix;
+	while (cur_it != vector_code->end()) {
+		prefix_count = _state_bits - 1;
+		while (prefix_count >= 0) {
+			remcount = handle_defcompr(vector_code, index, prefix_count, len);
+			switch (remcount) {
+			case 0:
+				if ((index + len) >= vector_code->size()) {
+					cur_it = vector_code->end();
+					prefix_count = -1;
+				} else if (prefix_count < half_state_bit) {
+					++index;
+					cur_it = vector_code->begin() + index;
+					prefix_count = -1;
+				} else {
+					--prefix_count;
+				}
+				break;
+			default:
+				index += (len - remcount);
+				cur_it = vector_code->begin() + index;
+				prefix_count = -1;
+				break;
+			}
+		}
+	}
+
+}
+
 size_t transtable::default_transition_compress(BLOCK_CODE_PTR vector_code,
 		size_t index, size_t length, int mask_bit) {
 	size_t ret_val = 0;
@@ -882,9 +978,9 @@ void transtable::generate_bolcks_code(size_t block_size) {
 			pre_shift = shift;
 			handle_each_input(temp_input, index, length, _transitions[it]);
 		} while (index + length < _state_size);
-
-		this->default_transition_compress(_transitions[it], 0,
-				_transitions[it]->size(), _state_bits);
+		this->default_transition_compression(_transitions[it]);
+//		this->default_transition_compress(_transitions[it], 0,
+//				_transitions[it]->size(), 0);
 		cur_trans_num = _transitions[it]->size();
 		_total_final_transitions_num += cur_trans_num;
 		_final_blocks_num_each_input[it] = ceil(

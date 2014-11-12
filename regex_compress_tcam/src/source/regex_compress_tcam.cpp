@@ -148,15 +148,19 @@ void handle_compress(DFA *dfa) {
 	if ((dfa == NULL) || (!config.tcam))
 		return;
 	cout << "Compress..." << endl;
-	ofstream *table_fout = new ofstream();
-	(*table_fout).open("transition_table.txt");
+	ofstream *table_fout_after = new ofstream();
+	ofstream *table_fout_before = new ofstream();
+
+	(*table_fout_after).open("transition_table_after.txt");
+	(*table_fout_before).open("transition_table_before.txt");
 
 	transtable *table = new transtable();
 	table->handle_table(dfa->get_state_table(), dfa->size());
+	table->print_table(*table_fout_before);
 	table->reorder();
 //
 	table->replace_table();
-	table->print_table(*table_fout);
+	table->print_table(*table_fout_after);
 
 	table->compress_index_table();
 	table->print_index_table();
@@ -196,10 +200,11 @@ void handle_compress(DFA *dfa) {
 
 		inputs_code_fout[i].close();
 	}
+	table_fout_before->close();
+	table_fout_after->close();
 
-	table_fout->close();
-
-	delete table_fout;
+	delete table_fout_before;
+	delete table_fout_after;
 	delete[] blocks_fout;
 	delete[] inputs_code_fout;
 	delete[] blocks_code_fout;

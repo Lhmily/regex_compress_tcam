@@ -87,6 +87,9 @@ private:
 	size_t default_transition_compress(BLOCK_CODE_PTR vector_code, size_t index,
 			size_t length, int mask_bit);
 
+	void default_transition_compression(BLOCK_CODE_PTR vector_code);
+	size_t handle_defcompr(BLOCK_CODE_PTR vector_code, size_t index,
+			size_t prefix_conut, size_t &len);
 	void generate_input_ascii_dst();
 	void handle_input_ascii_compress(int index, int end);
 
